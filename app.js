@@ -99,9 +99,14 @@ async function mailOrder(){
       salesRep:$('salesRep').value.trim(),
       customerCode:$('customerCode').value.trim(),
       customerTitle:$('customerTitle').value.trim(),
+      recipientEmail:$('recipientEmail').value.trim(),
       fileName:file.name,
       fileBase64:await fileToBase64(file)
     };
+    const recipientEmail=$('recipientEmail').value.trim();
+    if(!recipientEmail) throw new Error('E-posta adresi giriniz.');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) throw new Error('Geçerli bir e-posta adresi giriniz.');
+    payload.recipientEmail=recipientEmail;
     btn.disabled=true; btn.textContent='Gönderiliyor...';
     const res=await fetch('/api/send-order', {
       method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
@@ -115,7 +120,7 @@ async function mailOrder(){
 }
 function logout(){
   state.order.clear();
-  ['salesRep','customerCode','customerTitle','searchBox'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  ['salesRep','customerCode','customerTitle','recipientEmail','searchBox'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   sessionStorage.clear();
   localStorage.removeItem('kuzeypet-order');
   if(EXIT_URL==='about:blank') window.location.replace('about:blank');

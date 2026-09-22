@@ -1,54 +1,56 @@
-# KuzeyPet Sipariş Sistemi - Cloudflare Pages
+# KuzeyPet Sipariş Sistemi - Brevo / Cloudflare V3
 
-Bu sürüm ürünleri `data/urunler.xlsx` dosyasından okur, sipariş Excel'i oluşturur ve iki şekilde kullanılabilir:
+Bu sürüm ürünleri `data/urunler.xlsx` dosyasından okur, sipariş Excel'ini oluşturur ve iki şekilde kullanılabilir:
 
 - **Excel İndir:** Sipariş dosyasını kullanıcının cihazına indirir.
-- **Mail Gönder:** Aynı Excel'i arka planda oluşturur, dosyayı Microsoft 365 üzerinden e-posta eki olarak gönderir.
-- **Çıkış Yap:** Formu/siparişi temizler ve uygulamadan çıkar. Varsayılan olarak boş sayfaya yönlendirir. Kurumsal portal adresine dönmesi isteniyorsa `app.js` içindeki `EXIT_URL` değerini portal URL'si ile değiştirin.
+- **Mail Gönder:** Aynı Excel'i arka planda oluşturur ve Brevo Transactional Email API üzerinden e-posta eki olarak gönderir.
+- **Çıkış Yap:** Formu/siparişi temizler ve uygulamadan çıkar. Varsayılan olarak boş sayfaya yönlendirir. Kurumsal portal adresine dönmesi isteniyorsa `app.js` içindeki `EXIT_URL` değerini değiştirin.
 
-## Yeni Satış Temsilcisi alanı
+## Form alanları
 
-Müşteri kodunun üstünde **Satış Temsilcisi / Ad Soyad** alanı vardır. Bu alan zorunludur ve oluşturulan Excel'in içine de yazılır.
+- **Satış Temsilcisi / Ad Soyad:** Zorunludur. Excel dosyasına eklenir ve mail konu başlığında kullanılır.
+- **Müşteri Kodu:** Zorunludur.
+- **Müşteri Ünvanı:** Opsiyoneldir.
+- **E-posta Adresi:** Mailin gönderileceği alıcı adresidir. Kullanıcı her siparişte sayfadan girer.
 
-## Mail gönderimi
+Mail konu örneği:
 
-Gönderen adres varsayılan olarak:
+`KuzeyPet Sipariş - Ahmet Yılmaz - B320 - Örnek Petshop`
 
-`salesexcellencesystem@kuzeypet.com`
+## Cloudflare Variables and Secrets
 
-Alıcı adresi kod içine yazılmaz. Cloudflare Pages ortam değişkeni olarak tanımlanır; böylece gerektiğinde kodu değiştirmeden güncellenebilir.
+Cloudflare Dashboard > Workers & Pages > ilgili proje > Settings > Variables and Secrets bölümünde:
 
-### Gerekli Cloudflare Pages değişkenleri
+- `BREVO_API_KEY` = Brevo API Key (**Secret** olarak kaydedin)
+- `MAIL_FROM` = `salesexcellencesystem@kuzeypet.com`
+- `MAIL_FROM_NAME` = `KuzeyPet Sales Excellence System`
 
-Cloudflare Dashboard > Workers & Pages > ilgili proje > Settings > Variables and Secrets bölümüne şunları ekleyin:
+`ORDER_RECIPIENT`, `TENANT_ID`, `CLIENT_ID` ve `CLIENT_SECRET` artık kullanılmaz.
 
-- `TENANT_ID` = Microsoft 365 / Entra tenant ID
-- `CLIENT_ID` = Entra App Registration Application (client) ID
-- `CLIENT_SECRET` = Entra uygulama secret değeri (**Secret olarak kaydedin**)
-- `ORDER_RECIPIENT` = siparişlerin gönderileceği sabit e-posta adresi
-- `MAIL_SENDER` = `salesexcellencesystem@kuzeypet.com` (opsiyonel; yazılmazsa bu adres kullanılır)
+> Güvenlik: Brevo API key hiçbir zaman `index.html` veya `app.js` içine yazılmamalıdır. API key yalnızca Cloudflare Secret olarak tutulur.
 
-Production ve Preview ortamlarında gerekiyorsa ayrı ayrı tanımlayın.
+## Brevo tarafı
 
-### Microsoft Entra / Graph yetkisi
+Brevo'da `salesexcellencesystem@kuzeypet.com` gönderen adresinin doğrulanmış olması gerekir. Worker, `POST https://api.brevo.com/v3/smtp/email` üzerinden mail gönderir ve oluşturulan `.xlsx` dosyasını base64 attachment olarak ekler.
 
-1. Microsoft Entra Admin Center'da bir **App Registration** oluşturun.
-2. API permissions altında Microsoft Graph > **Application permissions > Mail.Send** ekleyin.
-3. **Grant admin consent** uygulayın.
-4. Certificates & secrets bölümünden bir Client Secret oluşturun ve değerini Cloudflare'daki `CLIENT_SECRET` secret'ına yazın.
-5. Uygulamanın yalnızca `salesexcellencesystem@kuzeypet.com` posta kutusundan mail gönderebilmesi için Exchange Online tarafında uygulama erişimini bu mailbox ile sınırlandırmanız önerilir.
+## GitHub / Cloudflare yayın
 
-> Güvenlik: Microsoft 365 şifresi veya Client Secret hiçbir zaman `index.html` / `app.js` içine yazılmamalıdır. Mail işlemi `functions/api/send-order.js` içindeki Cloudflare Pages Function üzerinden yapılır.
+Bu paketin **ordersys-main klasörünün içeriğini** GitHub repository'nizin köküne yükleyin. Özellikle aşağıdaki dizin yapısı korunmalıdır:
 
-## Yayın
+- `index.html`
+- `app.js`
+- `functions/api/send-order.js`
+- `data/urunler.xlsx`
+- diğer mevcut asset dosyaları
 
-- Framework preset: None
-- Build command: boş
-- Build output directory: `/` veya root
-- `functions/` klasörü proje kökünde kalmalıdır.
+Cloudflare GitHub commit'ini deploy ettikten sonra `/api/send-order` endpoint'i yeni Brevo sürümüyle çalışır.
 
-GitHub'a bu paketin içeriğini yükleyip Cloudflare Pages deployment yaptığınızda `/api/send-order` fonksiyonu otomatik yayınlanır.
+## Hızlı test
 
-## Ürün listesi
+1. Siteyi Cloudflare URL'sinden açın.
+2. Satış temsilcisi, müşteri kodu ve **E-posta Adresi** alanlarını doldurun.
+3. En az bir ürüne adet girin.
+4. **Mail Gönder** butonuna basın.
+5. Başarılıysa `Sipariş Excel eki ile mail olarak gönderildi.` mesajı görünür.
 
-`data/urunler.xlsx` dosyasını aynı kolon yapısıyla güncellerseniz sistem yeni ürünleri okur. Dosyaya erişilemezse `embedded-products.js` içindeki gömülü kopya kullanılabilir.
+Gönderim hata verirse Cloudflare Worker loglarında `Brevo send email error` satırını kontrol edin.
