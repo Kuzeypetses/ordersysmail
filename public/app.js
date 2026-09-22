@@ -101,7 +101,7 @@ function openMailModal(){
   try{
     validateOrder();
     const modal=$('mailModal');
-    $('recipientEmailModal').value='';
+    $('recipientEmailModal').value='didemhan@kuzeypet.com';
     $('mailModalStatus').textContent='';
     modal.hidden=false;
     document.body.classList.add('modal-open');
