@@ -1,56 +1,51 @@
-# KuzeyPet Sipariş Sistemi - Brevo / Cloudflare V3
+# KuzeyPet OrderSys Mail - V4
 
-Bu sürüm ürünleri `data/urunler.xlsx` dosyasından okur, sipariş Excel'ini oluşturur ve iki şekilde kullanılabilir:
+Bu sürüm Cloudflare Workers + Static Assets mimarisi için hazırlanmıştır.
 
-- **Excel İndir:** Sipariş dosyasını kullanıcının cihazına indirir.
-- **Mail Gönder:** Aynı Excel'i arka planda oluşturur ve Brevo Transactional Email API üzerinden e-posta eki olarak gönderir.
-- **Çıkış Yap:** Formu/siparişi temizler ve uygulamadan çıkar. Varsayılan olarak boş sayfaya yönlendirir. Kurumsal portal adresine dönmesi isteniyorsa `app.js` içindeki `EXIT_URL` değerini değiştirin.
+## V4 değişiklikleri
 
-## Form alanları
-
-- **Satış Temsilcisi / Ad Soyad:** Zorunludur. Excel dosyasına eklenir ve mail konu başlığında kullanılır.
-- **Müşteri Kodu:** Zorunludur.
-- **Müşteri Ünvanı:** Opsiyoneldir.
-- **E-posta Adresi:** Mailin gönderileceği alıcı adresidir. Kullanıcı her siparişte sayfadan girer.
-
-Mail konu örneği:
-
-`KuzeyPet Sipariş - Ahmet Yılmaz - B320 - Örnek Petshop`
+- Ana formdaki E-posta Adresi alanı kaldırıldı.
+- `Mail Gönder` tıklandığında alıcı adresinin girileceği modal pencere açılır.
+- Excel dosyası arka planda oluşturulur ve Brevo Transactional Email API üzerinden ek olarak gönderilir.
+- `/api/send-order` artık Pages Functions klasörüne bağlı değildir; doğrudan `worker.js` içindeki Worker route'udur.
+- Statik site dosyaları `public/` klasöründen Cloudflare Workers Static Assets ile sunulur.
 
 ## Cloudflare Variables and Secrets
 
-Cloudflare Dashboard > Workers & Pages > ilgili proje > Settings > Variables and Secrets bölümünde:
+Aşağıdaki değerler Cloudflare Worker üzerinde tanımlı olmalıdır:
 
-- `BREVO_API_KEY` = Brevo API Key (**Secret** olarak kaydedin)
-- `MAIL_FROM` = `salesexcellencesystem@kuzeypet.com`
-- `MAIL_FROM_NAME` = `KuzeyPet Sales Excellence System`
+- `BREVO_API_KEY` -> Secret -> Brevo API Keys bölümünden oluşturulan `xkeysib-...` anahtar
+- `MAIL_FROM` -> Variable -> `salesexcellencesystem@kuzeypet.com`
+- `MAIL_FROM_NAME` -> Variable -> örn. `Rut Dışı Sipariş`
 
-`ORDER_RECIPIENT`, `TENANT_ID`, `CLIENT_ID` ve `CLIENT_SECRET` artık kullanılmaz.
+`ORDER_RECIPIENT` kullanılmaz. Alıcı adresi kullanıcı tarafından Mail Gönder penceresinde girilir.
 
-> Güvenlik: Brevo API key hiçbir zaman `index.html` veya `app.js` içine yazılmamalıdır. API key yalnızca Cloudflare Secret olarak tutulur.
+## GitHub / Cloudflare deploy
 
-## Brevo tarafı
+Repo kökünde şu dosyalar bulunmalıdır:
 
-Brevo'da `salesexcellencesystem@kuzeypet.com` gönderen adresinin doğrulanmış olması gerekir. Worker, `POST https://api.brevo.com/v3/smtp/email` üzerinden mail gönderir ve oluşturulan `.xlsx` dosyasını base64 attachment olarak ekler.
+- `worker.js`
+- `wrangler.jsonc`
+- `package.json`
+- `public/`
 
-## GitHub / Cloudflare yayın
+Cloudflare Git build ayarında deploy komutu gerekiyorsa:
 
-Bu paketin **ordersys-main klasörünün içeriğini** GitHub repository'nizin köküne yükleyin. Özellikle aşağıdaki dizin yapısı korunmalıdır:
+`npx wrangler deploy`
 
-- `index.html`
-- `app.js`
-- `functions/api/send-order.js`
-- `data/urunler.xlsx`
-- diğer mevcut asset dosyaları
+Build komutu gerekiyorsa boş bırakılabilir veya `npm install` kullanılabilir.
 
-Cloudflare GitHub commit'ini deploy ettikten sonra `/api/send-order` endpoint'i yeni Brevo sürümüyle çalışır.
+Cloudflare dashboard üzerindeki mevcut Variables and Secrets değerleri deploy sonrasında da Worker'a bağlı olmalıdır.
 
-## Hızlı test
+## Test
 
-1. Siteyi Cloudflare URL'sinden açın.
-2. Satış temsilcisi, müşteri kodu ve **E-posta Adresi** alanlarını doldurun.
-3. En az bir ürüne adet girin.
-4. **Mail Gönder** butonuna basın.
-5. Başarılıysa `Sipariş Excel eki ile mail olarak gönderildi.` mesajı görünür.
+Deploy sonrası:
 
-Gönderim hata verirse Cloudflare Worker loglarında `Brevo send email error` satırını kontrol edin.
+1. Siteyi açın.
+2. Satış Temsilcisi, Müşteri Kodu ve sipariş miktarlarını girin.
+3. `Mail Gönder` butonuna basın.
+4. Açılan pencerede alıcı e-posta adresini yazın.
+5. `Gönder` butonuna basın.
+6. Başarılı durumda modal ve ekranda başarı mesajı görünür.
+
+Hata olursa Cloudflare Observability loglarında `/api/send-order` isteği artık görünmelidir.

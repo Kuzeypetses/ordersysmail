@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#c8102e" />
+  <title>KuzeyPet Sipariş Sistemi</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="embedded-products.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">KUZEYPET</p>
+        <h1>Sipariş Sistemi</h1>
+      </div>
+      <img src="assets/logo.png" alt="KuzeyPet Logo" class="logo" onerror="this.style.display='none'" />
+    </header>
+
+    <section class="card customer-card">
+      <label>Satış Temsilcisi<input id="salesRep" inputmode="text" autocomplete="name" placeholder="Ad Soyad" /></label>
+      <label>Müşteri Kodu<input id="customerCode" inputmode="text" autocomplete="off" placeholder="Örn. B320" /></label>
+      <label>Müşteri Ünvanı<input id="customerTitle" inputmode="text" autocomplete="organization" placeholder="Müşteri ünvanı" /></label>
+      <label>Ürün Ara<input id="searchBox" inputmode="search" autocomplete="off" placeholder="Ürün adı veya kodu yazın" /></label>
+    </section>
+
+    <section class="summary-grid">
+      <div class="summary"><span>Toplam Ürün</span><strong id="totalQty">0</strong></div>
+      <div class="summary"><span>Toplam Tutar</span><strong id="totalAmount">0,00 TL</strong></div>
+    </section>
+
+    <main id="productArea" class="product-area" aria-live="polite">
+      <div class="loading">Ürünler yükleniyor...</div>
+    </main>
+
+    <footer class="actions">
+      <button id="saveBtn" class="secondary">Excel İndir</button>
+      <button id="mailBtn" class="primary">Mail Gönder</button>
+      <button id="logoutBtn" class="danger">Çıkış Yap</button>
+    </footer>
+  </div>
+
+  <div id="mailModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mailModalTitle">
+      <button id="closeMailModal" class="modal-close" type="button" aria-label="Kapat">×</button>
+      <div class="modal-icon">✉</div>
+      <h2 id="mailModalTitle">Siparişi Mail ile Gönder</h2>
+      <p>Excel sipariş dosyasının gönderileceği e-posta adresini yazın.</p>
+      <label class="modal-label">E-posta Adresi
+        <input id="recipientEmailModal" type="email" inputmode="email" autocomplete="email" placeholder="ornek@firma.com" />
+      </label>
+      <div class="modal-actions">
+        <button id="cancelMailBtn" class="secondary" type="button">Vazgeç</button>
+        <button id="confirmMailBtn" class="primary" type="button">Gönder</button>
+      </div>
+      <div id="mailModalStatus" class="modal-status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
