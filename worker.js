@@ -26,6 +26,7 @@ async function sendOrder(request, env) {
     const salesRep = String(body.salesRep || '').trim();
     const customerCode = String(body.customerCode || '').trim();
     const customerTitle = String(body.customerTitle || '').trim();
+    const notes = String(body.notes || '').trim();
     const recipientEmail = String(body.recipientEmail || '').trim().toLowerCase();
     const fileName = String(body.fileName || '').trim();
     const fileBase64 = String(body.fileBase64 || '').trim();
@@ -43,6 +44,7 @@ async function sendOrder(request, env) {
     const safeRep = escapeHtml(salesRep);
     const safeCode = escapeHtml(customerCode);
     const safeTitle = escapeHtml(customerTitle);
+    const safeNotes = escapeHtml(notes).replace(/\r?\n/g, '<br>');
 
     const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
@@ -55,7 +57,7 @@ async function sendOrder(request, env) {
         sender: { name: senderName, email: sender },
         to: [{ email: recipientEmail }],
         subject: `KuzeyPet Sipariş - ${salesRep} - ${customerCode}${customerTitle ? ` - ${customerTitle}` : ''}`,
-        htmlContent: `<p>Merhaba,</p><p>Yeni sipariş formu ektedir.</p><p><strong>Satış Temsilcisi:</strong> ${safeRep}<br><strong>Müşteri Kodu:</strong> ${safeCode}<br><strong>Müşteri Ünvanı:</strong> ${safeTitle || '-'}</p><p>İyi çalışmalar.</p>`,
+        htmlContent: `<p>Merhaba,</p><p>Yeni sipariş formu ektedir.</p><p><strong>Satış Temsilcisi:</strong> ${safeRep}<br><strong>Müşteri Kodu:</strong> ${safeCode}<br><strong>Müşteri Ünvanı:</strong> ${safeTitle || '-'}</p><p><strong>Notlar:</strong><br>${safeNotes || '-'}</p><p>İyi çalışmalar.</p>`,
         attachment: [{ name: fileName, content: fileBase64 }]
       })
     });

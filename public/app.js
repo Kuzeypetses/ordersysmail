@@ -128,6 +128,7 @@ async function confirmMailSend(){
       salesRep:$('salesRep').value.trim(),
       customerCode:$('customerCode').value.trim(),
       customerTitle:$('customerTitle').value.trim(),
+      notes:$('notes').value.trim(),
       recipientEmail,
       fileName:file.name,
       fileBase64:await fileToBase64(file)
@@ -149,7 +150,7 @@ async function confirmMailSend(){
 }
 function logout(){
   state.order.clear();
-  ['salesRep','customerCode','customerTitle','searchBox'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+  ['salesRep','customerCode','customerTitle','searchBox','notes'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   sessionStorage.clear();
   localStorage.removeItem('kuzeypet-order');
   if(EXIT_URL==='about:blank') window.location.replace('about:blank');
